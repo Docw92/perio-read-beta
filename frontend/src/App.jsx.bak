@@ -1,0 +1,208 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 import React, \{ useState \} from "react";\
+\
+const API_BASE = "http://localhost:8000";\
+\
+function App() \{\
+  const [patient, setPatient] = useState(\{\
+    patient_id: "p1",\
+    name: "Test Patient",\
+    age: 30,\
+    sex: "M",\
+    clinical_params: [],\
+  \});\
+  const [toothEntry, setToothEntry] = useState(\{\
+    tooth_number: 11,\
+    pocket_depth_mm: 3,\
+    gingival_recession_mm: 0,\
+    recession_class: "",\
+    mobility_grade: 0,\
+    furcation_class: 0,\
+    bleeding_on_probing: false,\
+  \});\
+  const [results, setResults] = useState(null);\
+  const [file, setFile] = useState(null);\
+\
+  function addTooth() \{\
+    setPatient((prev) => (\{\
+      ...prev,\
+      clinical_params: [...prev.clinical_params, toothEntry],\
+    \}));\
+    setToothEntry(\{\
+      tooth_number: toothEntry.tooth_number + 1,\
+      pocket_depth_mm: 3,\
+      gingival_recession_mm: 0,\
+      recession_class: "",\
+      mobility_grade: 0,\
+      furcation_class: 0,\
+      bleeding_on_probing: false,\
+    \});\
+  \}\
+\
+  async function uploadImage() \{\
+    if (!file) return alert("Choose a file first");\
+    const form = new FormData();\
+    form.append("file", file);\
+    form.append("patient_id", patient.patient_id);\
+    const res = await fetch(`$\{API_BASE\}/upload_image`, \{\
+      method: "POST",\
+      body: form,\
+    \});\
+    const j = await res.json();\
+    alert("Uploaded: " + j.filename);\
+  \}\
+\
+  async function analyze() \{\
+    const res = await fetch(`$\{API_BASE\}/analyze`, \{\
+      method: "POST",\
+      headers: \{ "Content-Type": "application/json" \},\
+      body: JSON.stringify(patient),\
+    \});\
+    const j = await res.json();\
+    setResults(j.result);\
+  \}\
+\
+  return (\
+    <div style=\{\{ padding: 20, fontFamily: "Arial" \}\}>\
+      <h1>PERIO-READ Beta</h1>\
+      <h3>Patient</h3>\
+      <div>\
+        ID:\{" "\}\
+        <input\
+          value=\{patient.patient_id\}\
+          onChange=\{(e) =>\
+            setPatient(\{ ...patient, patient_id: e.target.value \})\
+          \}\
+        />\
+        Name:\{" "\}\
+        <input\
+          value=\{patient.name\}\
+          onChange=\{(e) => setPatient(\{ ...patient, name: e.target.value \})\}\
+        />\
+        Age:\{" "\}\
+        <input\
+          type="number"\
+          value=\{patient.age\}\
+          onChange=\{(e) =>\
+            setPatient(\{ ...patient, age: parseInt(e.target.value || 0) \})\
+          \}\
+        />\
+      </div>\
+\
+      <h3>Tooth entry</h3>\
+      <div>\
+        Tooth #:\{" "\}\
+        <input\
+          type="number"\
+          value=\{toothEntry.tooth_number\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{\
+              ...toothEntry,\
+              tooth_number: parseInt(e.target.value || 0),\
+            \})\
+          \}\
+        />\
+        Pocket mm:\{" "\}\
+        <input\
+          type="number"\
+          value=\{toothEntry.pocket_depth_mm\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{\
+              ...toothEntry,\
+              pocket_depth_mm: parseFloat(e.target.value || 0),\
+            \})\
+          \}\
+        />\
+        Recession class:\{" "\}\
+        <select\
+          value=\{toothEntry.recession_class\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{ ...toothEntry, recession_class: e.target.value \})\
+          \}\
+        >\
+          <option value="">--</option>\
+          <option value="I">I</option>\
+          <option value="II">II</option>\
+          <option value="III">III</option>\
+          <option value="IV">IV</option>\
+        </select>\
+        Mobility:\{" "\}\
+        <input\
+          type="number"\
+          min="0"\
+          max="3"\
+          value=\{toothEntry.mobility_grade\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{\
+              ...toothEntry,\
+              mobility_grade: parseInt(e.target.value || 0),\
+            \})\
+          \}\
+        />\
+        Furcation:\{" "\}\
+        <input\
+          type="number"\
+          min="0"\
+          max="4"\
+          value=\{toothEntry.furcation_class\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{\
+              ...toothEntry,\
+              furcation_class: parseInt(e.target.value || 0),\
+            \})\
+          \}\
+        />\
+        BOP:\{" "\}\
+        <input\
+          type="checkbox"\
+          checked=\{toothEntry.bleeding_on_probing\}\
+          onChange=\{(e) =>\
+            setToothEntry(\{\
+              ...toothEntry,\
+              bleeding_on_probing: e.target.checked,\
+            \})\
+          \}\
+        />\
+        <button onClick=\{addTooth\}>Add tooth</button>\
+      </div>\
+\
+      <h4>Current teeth (\{patient.clinical_params.length\})</h4>\
+      <pre style=\{\{ background: "#f6f6f6", padding: 10 \}\}>\
+        \{JSON.stringify(patient.clinical_params, null, 2)\}\
+      </pre>\
+\
+      <h3>Upload radiograph / clinical photo</h3>\
+      <input type="file" onChange=\{(e) => setFile(e.target.files[0])\} />\
+      <button onClick=\{uploadImage\}>Upload image</button>\
+\
+      <div style=\{\{ marginTop: 20 \}\}>\
+        <button onClick=\{analyze\} style=\{\{ padding: "10px 20px", fontSize: 16 \}\}>\
+          Analyze\
+        </button>\
+      </div>\
+\
+      \{results && (\
+        <div style=\{\{ marginTop: 20 \}\}>\
+          <h3>Results</h3>\
+          <div>\
+            <strong>Overall:</strong> \{results.fused.overall_score\} \'97\{" "\}\
+            \{results.fused.overall_label\}\
+          </div>\
+          <h4>Per-tooth</h4>\
+          <pre style=\{\{ background: "#f6f6f6", padding: 10 \}\}>\
+            \{JSON.stringify(results.tooth_results, null, 2)\}\
+          </pre>\
+        </div>\
+      )\}\
+    </div>\
+  );\
+\}\
+\
+export default App;\
+}
